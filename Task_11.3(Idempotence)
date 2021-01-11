@@ -1,0 +1,25 @@
+- hosts: web
+  gather_facts: False
+  tasks:
+
+          - name: Installing HTTPD
+            package:
+                  name: "httpd"
+                  state: present
+
+          - name: Creating Web Page
+            copy:
+                  dest: "/var/www/html/index.html"
+                  content: "<h1>Hey! Enabling Idempotence</h1>"
+            register: y
+
+          - name: Starting Service
+            service:
+                  name: "httpd"
+                  state: restarted
+            when: y.changed!=false
+
+          - name: Stopping Firewall
+            firewalld:
+                  port: "80/tcp"
+                  state: enabled
