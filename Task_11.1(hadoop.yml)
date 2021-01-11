@@ -1,0 +1,69 @@
+- hosts: master
+  vars_prompt:
+          - name: nn_folder
+            private: no
+            prompt: "Enter the folder name for namenode"
+  tasks:
+          - name: "Installing jdk"
+            command: rpm -i jdk-8u171-linuxx-x64.rpm
+
+          - name: "Installing hadoop"
+            command: rpm -i hadoop-1.2.1-1.x86_64.rpm --force
+
+          - name: "Creating folder for namenode"
+            file:
+                  state: directory
+                  path: "/{{ nn_folder }}"
+
+          - name: "Configuring hdfs-site.xml"
+            template:
+                    dest: "/etc/hadoop/hdfs-site.xml"
+                    src: "/ws/hdfs-site.xml"
+
+          - name: "Configuring core-site.xml"
+            template:
+                    dest: "/etc/hadoop/core-site.xml"
+                    src: "/ws/core-site.xml"
+
+          - name: "Formatting namenode"
+            shell: echo Y | hadoop namenode -format
+
+          - name: "Stopping firewall"
+            firewalld:
+                    state: enabled
+                    permanent: yes
+                    immediate: yes
+            when: false
+
+          - name: "Starting namenode services"
+            shell: hadoop-daemon.sh start namenode
+
+- hosts: slave
+  vars_prompt:
+          - name: dn_folder
+            private: no
+            prompt: "Enter the folder name for datanode"
+  tasks:
+          - name: "Installing jdk"
+            shell: rpm -i jdk-8u171-linux-x64.rpm
+            
+          - name: "Installing hadoop"
+            shell: rpm -i hadoop-1.2.1-1.x86_64.rpm --force
+
+          - name: "Creating folder for datanode"
+            file:
+                  state: directory
+                  path: "/{{ dn_folder }}"
+
+          - name: "Configuring hdfs-site.xml"
+            template:
+                    dest: "/etc/hadoop/hdfs-site.xml"
+                    src: "/ws/hdfs-site_dn.xml"
+
+          - name: "Configuring core-site.xml"
+            template:
+                    dest: "/etc/hadoop/core-site.xml"
+                    src: "/ws/core-site.xml"
+
+          - name: "Starting datanode services"
+            shell: hadoop-daemon.sh start datanode
